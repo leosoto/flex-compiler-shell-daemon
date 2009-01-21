@@ -285,7 +285,7 @@ def run_command(cmd):
        return 1
     print output
     # Check if compilation worked:
-    if re.search(r'\.swf \([0-9]+ bytes\)', output):
+    if re.search(r'\.sw[cf] \([0-9]+ bytes\)', output):
        return 0
     else:
        return 1
