@@ -173,7 +173,7 @@ class FCSH(object):
     TARGET_ID_RE = re.compile('fcsh: Assigned ([0-9]+) as the compile target id')
 
     def __init__(self):
-        self.fcsh = Popen("$FLEX_HOME/bin/fcsh", shell=True, close_fds=True,
+        self.fcsh = Popen("LC_ALL=C $FLEX_HOME/bin/fcsh", shell=True, close_fds=True,
                           stdin=PIPE, stdout=PIPE, stderr=STDOUT)
         self.command_ids = {}
         self.read_to_prompt()
@@ -283,7 +283,7 @@ def run_command(cmd):
     except Error, v:
        print "XML-RPC Error:", v
        return 1
-    print output
+    print output.encode('iso-8859-1') # Looks like flex outputs latin-1 sometimes
     # Check if compilation worked:
     if re.search(r'\.sw[cf] \([0-9]+ bytes\)', output):
        return 0
