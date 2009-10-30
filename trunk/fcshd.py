@@ -24,6 +24,8 @@ if (hasattr(os, "devnull")):
 else:
    REDIRECT_TO = "/dev/null"
 
+CWD = os.getcwd()
+
 def createDaemon():
    """Detach a process from the controlling terminal and run it in the
    background as a daemon.
@@ -174,7 +176,7 @@ class FCSH(object):
 
     def __init__(self):
         self.fcsh = Popen("LC_ALL=C $FLEX_HOME/bin/fcsh", shell=True, close_fds=True,
-                          stdin=PIPE, stdout=PIPE, stderr=STDOUT)
+                          cwd=CWD, stdin=PIPE, stdout=PIPE, stderr=STDOUT)
         self.command_ids = {}
         self.read_to_prompt()
 
@@ -183,7 +185,6 @@ class FCSH(object):
         Reads fcsh output until the prompt is detected, and returns the collected
         output
         """
-        self.fcsh.stdout.flush()
         output = ""
         ch = self.fcsh.stdout.read(1)
         while ch:
@@ -191,7 +192,7 @@ class FCSH(object):
             if output.endswith(self.PROMPT):
                 break
             ch = self.fcsh.stdout.read(1)
-        logging.debug("Found fcsh prompt")
+        logging.debug("Found fcsh prompt, read %s", output)
         return output
 
     def run_command(self, cmd):
