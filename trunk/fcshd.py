@@ -3,6 +3,7 @@ import logging
 import os
 import re
 import time
+import platform
 from optparse import OptionParser
 from subprocess import Popen, PIPE, STDOUT
 from xmlrpclib import ServerProxy, Error
@@ -227,38 +228,30 @@ class FCSH(object):
 
 PORT = 2345
 
-def run_server():
+def run_server(as_daemon=True):
     """
-    Daemonizes the process and starts an XML-RPC server to drive the FCSH
-    wrapper.
+    Optionally daemonizes the process and starts an XML-RPC server to drive the
+    FCSH wrapper.
     """
-    retCode = createDaemon()
     logging.basicConfig(level=logging.DEBUG,
                         format='%(asctime)s %(levelname)s %(message)s',
                         filename='/tmp/fcshd.log',
                         filemode='w')
-
-
-    # The code, as is, will create a new file in the root directory, when
-    # executed with superuser privileges.  The file will contain the following
-    # daemon related process parameters: return code, process ID, parent
-    # process group ID, session ID, user ID, effective user ID, real group ID,
-    # and the effective group ID.  Notice the relationship between the daemon's
-    # process ID, process group ID, and its parent's process ID.
-
-    procParams = """
-    return code = %s
-    process ID = %s
-    parent process ID = %s
-    process group ID = %s
-    session ID = %s
-    user ID = %s
-    effective user ID = %s
-    real group ID = %s
-    effective group ID = %s
-    """ % (retCode, os.getpid(), os.getppid(), os.getpgrp(), os.getsid(0),
-           os.getuid(), os.geteuid(), os.getgid(), os.getegid())
-    logging.info(procParams + "\n")
+    if as_daemon:
+        retCode = createDaemon()
+        procParams = """
+        return code = %s
+        process ID = %s
+        parent process ID = %s
+        process group ID = %s
+        session ID = %s
+        user ID = %s
+        effective user ID = %s
+        real group ID = %s
+        effective group ID = %s
+        """ % (retCode, os.getpid(), os.getppid(), os.getpgrp(), os.getsid(0),
+               os.getuid(), os.geteuid(), os.getgid(), os.getegid())
+        logging.info(procParams + "\n")
 
     fcsh = FCSH()
     logging.debug("FCSH initialized\n")
@@ -279,6 +272,10 @@ def run_command(cmd):
     try:
        output =  server.run_command(cmd)
     except socket.error:
+       if platform.system == "Windows":
+          print "Please start the server process in a different prompt using"
+          print "fcshd.py --start-server"
+          return 1
        start_server()
        output = server.run_command(cmd)
     except Error, v:
@@ -291,13 +288,21 @@ def run_command(cmd):
     else:
        return 1
 
-def start_server():
-    print "Starting the server, please wait...",
-    if os.fork() == 0:
-        run_server()
-        os._exit(0)
-    time.sleep(2) # Give time to child to start up the server
-    print "OK."
+def start_server(as_daemon=True):
+    print "Starting the server, please wait..."
+    if as_daemon:
+        if os.fork() == 0:
+            run_server(as_daemon=True)
+            os._exit(0)
+        time.sleep(2) # Give time to child to start up the server
+        print "OK."
+    else:
+       print "Running fcshd.py server in the foreground. Press Ctrl-C to exit"
+       try:
+          run_server(as_daemon=False)
+       except KeyboardInterrupt:
+          print
+          print "Ctrl-C detected, exiting..."
 
 def stop_server():
     server = fcsh_server_proxy()
@@ -321,6 +326,10 @@ def parse_options(args):
                       default=False, help="Stops the FCSH server and exit")
     parser.add_option('--start-server', action="store_true", dest="start",
                       default=False, help="Starts the FCSH server and exit")
+    parser.add_option('--foreground', action="store_true", dest="foreground",
+                      default=platform.system() == 'Windows',
+                      help="Starts the FCSH server in the foreground. This is"
+                           "the default behavior in Windows")
     return parser.parse_args(args)
 
 def main(args):
@@ -331,7 +340,7 @@ the FLEX SDK"""
        return 1
     options, args = parse_options(args)
     if options.start:
-        run_server()
+        start_server(as_daemon=not options.foreground)
     elif options.stop:
         stop_server()
     else:
