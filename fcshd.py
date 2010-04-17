@@ -324,6 +324,11 @@ def parse_options(args):
     return parser.parse_args(args)
 
 def main(args):
+    if 'FLEX_HOME' not in os.environ:
+       print """
+Please set the FLEX_HOME environment variable pointing to the location of
+the FLEX SDK"""
+       return 1
     options, args = parse_options(args)
     if options.start:
         run_server()
