@@ -228,17 +228,20 @@ class FCSH(object):
 
 PORT = 2345
 
+def configure_server_logging():
+   logging.basicConfig(level=logging.DEBUG,
+                       format='%(asctime)s %(levelname)s %(message)s',
+                       filename='/tmp/fcshd.log',
+                       filemode='w')
+
 def run_server(as_daemon=True):
     """
     Optionally daemonizes the process and starts an XML-RPC server to drive the
     FCSH wrapper.
     """
-    logging.basicConfig(level=logging.DEBUG,
-                        format='%(asctime)s %(levelname)s %(message)s',
-                        filename='/tmp/fcshd.log',
-                        filemode='w')
     if as_daemon:
         retCode = createDaemon()
+        configure_server_logging()
         procParams = """
         return code = %s
         process ID = %s
@@ -252,7 +255,8 @@ def run_server(as_daemon=True):
         """ % (retCode, os.getpid(), os.getppid(), os.getpgrp(), os.getsid(0),
                os.getuid(), os.geteuid(), os.getgid(), os.getegid())
         logging.info(procParams + "\n")
-
+    else:
+       configure_server_logging()
     fcsh = FCSH()
     logging.debug("FCSH initialized\n")
 
