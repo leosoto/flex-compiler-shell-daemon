@@ -231,10 +231,10 @@ class FCSH(object):
 PORT = 2345
 
 def configure_server_logging():
-   logging.basicConfig(level=logging.DEBUG,
-                       format='%(asctime)s %(levelname)s %(message)s',
-                       filename='/tmp/fcshd.log',
-                       filemode='w')
+    logging.basicConfig(level=logging.DEBUG,
+                        format='%(asctime)s %(levelname)s %(message)s',
+                        filename='/tmp/fcshd.log',
+                        filemode='w')
 
 def run_server(as_daemon=True):
     """
