@@ -176,8 +176,10 @@ class FCSH(object):
     TARGET_ID_RE = re.compile('fcsh: Assigned ([0-9]+) as the compile target id')
 
     def __init__(self):
-        self.fcsh = Popen("LC_ALL=C $FLEX_HOME/bin/fcsh", shell=True, close_fds=True,
-                          cwd=CWD, stdin=PIPE, stdout=PIPE, stderr=STDOUT)
+        self.fcsh = Popen('LC_ALL=C "$FLEX_HOME"/bin/fcsh', shell=True,
+                         close_fds=True, cwd=CWD,
+                         stdin=PIPE, stdout=PIPE, stderr=STDOUT)
+
         self.command_ids = {}
         self.read_to_prompt()
 
