@@ -176,9 +176,15 @@ class FCSH(object):
     TARGET_ID_RE = re.compile('fcsh: Assigned ([0-9]+) as the compile target id')
 
     def __init__(self):
-        self.fcsh = Popen('LC_ALL=C "$FLEX_HOME"/bin/fcsh', shell=True,
+        
+        if sys.platform.startswith("win"):
+            self.fcsh = Popen('%FLEX_HOME%\\bin\\fcsh', shell=True, 
+                              stdin=PIPE, stdout=PIPE, stderr=STDOUT)
+        else:
+            self.fcsh = Popen('LC_ALL=C "$FLEX_HOME"/bin/fcsh', shell=True,
                          close_fds=True, cwd=CWD,
                          stdin=PIPE, stdout=PIPE, stderr=STDOUT)
+
 
         self.command_ids = {}
         self.read_to_prompt()
@@ -227,7 +233,7 @@ class FCSH(object):
                 logging.debug("Recording generated id: %s" %
                               self.command_ids[cmd])
         return output
-
+        
 PORT = 2345
 
 def configure_server_logging():
@@ -278,14 +284,14 @@ def run_command(cmd):
     try:
        output =  server.run_command(cmd)
     except socket.error:
-       if platform.system == "Windows":
+       if sys.platform.startswith("win"):
           print "Please start the server process in a different prompt using"
           print "fcshd.py --start-server"
           return 1
        start_server()
        output = server.run_command(cmd)
     except Error, v:
-       print "XML-RPC Error:", v
+       print "XML-RPC Error:", Error, v
        return 1
     print output.encode('iso-8859-1') # Looks like flex outputs latin-1 sometimes
     # Check if compilation worked:
